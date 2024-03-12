@@ -1,0 +1,15 @@
+#define function addTwo(uint256, uint256) view returns (uint256)
+
+// All macros annotate the number of items they will take from the stack, and the number of items
+// they will return upon completion
+#define macro MAIN() = takes(0) returns (0) {
+    push0 calldataload  // [number1] // load first 32 bytes onto the stack
+    0x20 calldataload   // [number2] // load second 32 bytes onto the stack
+    add                 // [number1+number2]
+
+    // EVM contracts can only return values that have been stored within the current executions memory frame
+    // The return opcode takes two values from the stack as inputs: the offset of memory to start returning from,
+    // and the length of memory to return. In this case, we return 32 bytes of memory starting from byte 0
+    push0 mstore         // place [number1+number2] in memory slot 0
+    0x20 push0 return    // return the result
+}

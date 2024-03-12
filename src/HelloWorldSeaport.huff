@@ -1,0 +1,28 @@
+// Strings are ABI encoded in 3 parts, 1 word (32 bytes) each
+// 1. The offset of the dynamic data (pointer to the start of the dynamic state) : uint256
+// 2. The length of the dynamic data : uint256
+// 3. The values of the dynamic data : dynamic length
+
+// For this Seaport example, we will optimize the method of storing the strings using fewer opcodes
+// We will take the length (0x0d) + the string in bytes (0x48656c6c6f2c20776f726c6421) => 0x0d48656c6c6f2c20776f726c6421
+// Then, we will left pad that value to: 0x000000000000000000000000000000000000000d48656c6c6f2c20776f726c6421
+// Then, instead of starting the second word at 0x20, if we offset that by 13 bytes (starting at 0x2d instead of 0x20),
+// it lines up so that the 0d falls in the right most (lowest) bits of the 2nd word (location 0x3f), and the remaining bytes
+// start immediately in the first leftmost (highest) byte of the third word (location 0x40)
+
+#define macro MAIN() = takes(0) returns(0) {
+    // store dynamic offset of 0x20 (32) at 0x00
+    0x20                                // [0x20]
+    0x00                                // [0x00, 0x20]
+    mstore                              // []
+    
+    // store the concatenated length + data at 0x20
+    0x0d48656c6c6f2c20776f726c6421      // [0x0d48656c6c6f2c20776f726c6421]
+    0x2d                                // [0x2d, 0x0d48656c6c6f2c20776f726c6421]
+    mstore                              // []
+    
+    // return the full 96 byte value
+    0x60                                // [0x60]
+    0x00                                // [0x00, 0x60]
+    return                              // []
+}

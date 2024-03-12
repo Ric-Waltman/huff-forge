@@ -1,0 +1,26 @@
+#define function addTwo(uint256, uint256) pure returns (uint256)
+
+#define macro ADD_TWO() = takes(0) returns (0) {
+    0x04 calldataload   // [number1] // load first 32 bytes onto the stack, after the function selector
+    0x20 calldataload   // [number2] // load second 32 bytes onto the stack
+    add                 // [number1+number2]
+
+    // EVM contracts can only return values that have been stored within the current executions memory frame
+    // The return opcode takes two values from the stack as inputs: the offset of memory to start returning from,
+    // and the length of memory to return. In this case, we return 32 bytes of memory starting from byte 0
+    push0 mstore         // place [number1+number2] in memory slot 0
+    0x20 push0 return    // return the result
+}
+
+// Main has been converted to a function dispatcher
+#define macro MAIN() = takes(0) returns (0) {
+    // Get the function selector
+    push0 calldataload
+    0xE0 shr            // 0xe0 represents shifting right by 28 bytes. We move the function selector from MSB to LSB
+
+    // Jump to the implementation of the ADD_TWO function if the calldata mathes the function selector
+    __FUNC_SIG(addTwo) eq addTwo jumpi
+
+    addTwo:
+        ADD_TWO()
+}
